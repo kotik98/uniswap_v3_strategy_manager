@@ -253,7 +253,6 @@ token1_abi = json.loads('[{"constant":true,"inputs":[],"name":"name","outputs":[
                         '"type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},'
                         '{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"}]')
 token1_address = Web3.toChecksumAddress('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-wallet_address = Web3.toChecksumAddress('0x5AB5bab28d1EA8c812B013B7fFF05112F298a25F')
 
 swap_router_abi = json.loads(
     '[{"inputs":[{"internalType":"address","name":"_factoryV2","type":"address"},{"internalType":"address",'
@@ -582,15 +581,15 @@ def tokens_for_strategy(min_range, max_range, investment, price):
 
 
 def remove_liquidity():
-    position_id = nonfungible_position_manager.functions.balanceOf(wallet_address).call()
+    position_id = nonfungible_position_manager.functions.balanceOf(WALLET_ADDRESS).call()
     position = nonfungible_position_manager.functions.positions(position_id).call()
     tx = nonfungible_position_manager.functions.approve(pool, position_id).buildTransaction(
         {
             "gasPrice": w3.eth.gas_price,
             "chainId": chain_id,
-            'from': wallet_address,
+            'from': WALLET_ADDRESS,
             'gas': 300000,
-            'nonce': w3.eth.getTransactionCount(wallet_address),
+            'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS),
         }
     )
     sign_and_send(tx)
@@ -614,12 +613,11 @@ def swap(zero_for_one, amount, fee, amount_out_minimum, sqrt_price_limit_x96):
         token_in = token1
         token_out = token0
         decimal = decimals_token_1
-    approve(token_in, swap_router_address)
     params = {
         'tokenIn': token_in.address,
         'tokenOut': token_out.address,
         'fee': fee,
-        'recipient': wallet_address,
+        'recipient': WALLET_ADDRESS,
         'deadline': round(time.time()) + 60 * 20,
         'amountIn': int(amount * (10 ** decimal)),
         'amountOutMinimum': amount_out_minimum,
@@ -629,10 +627,10 @@ def swap(zero_for_one, amount, fee, amount_out_minimum, sqrt_price_limit_x96):
         {
             "gasPrice": w3.eth.gas_price,
             "chainId": chain_id,
-            'from': wallet_address,
+            'from': WALLET_ADDRESS,
             'gas': 300000,
-            'nonce': w3.eth.getTransactionCount(wallet_address),
-            'value': amount * (10 ** decimal),
+            'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS),
+            'value': int(amount * (10 ** decimal)),
         }
     )
     return sign_and_send(tx)
@@ -643,9 +641,9 @@ def approve(token, spender_address):
     tx = token.functions.approve(spender_address, max_amount).buildTransaction({
         "gasPrice": w3.eth.gas_price,
         "chainId": chain_id,
-        'from': wallet_address,
+        'from': WALLET_ADDRESS,
         'gas': 200000,
-        'nonce': w3.eth.getTransactionCount(wallet_address)
+        'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS)
     })
     return sign_and_send(tx)
 
@@ -661,7 +659,7 @@ def add_liquidity(token0_amount, token1_amount, tick_lower, tick_upper):
         'amount1Desired': int(token1_amount * (10 ** decimals_token_1)),
         'amount0Min': 0,
         'amount1Min': 0,
-        'recipient': wallet_address,
+        'recipient': WALLET_ADDRESS,
         'deadline': round(time.time()) + 60 * 20
     }
     approve(token0, nonfungible_position_manager_address)
@@ -669,29 +667,29 @@ def add_liquidity(token0_amount, token1_amount, tick_lower, tick_upper):
     tx = nonfungible_position_manager.functions.mint(params).buildTransaction({
         "gasPrice": w3.eth.gas_price,
         "chainId": chain_id,
-        'from': wallet_address,
+        'from': WALLET_ADDRESS,
         'gas': 300000,
-        'nonce': w3.eth.getTransactionCount(wallet_address)
+        'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS)
     })
     return sign_and_send(tx)
 
 
 # swap
-# print('before')
-# print(token0.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_0))
-# print(token1.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_1))
-# print(swap(True, 20, pair_fee, 0, 0))
-# print('after')
-# print(token0.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_0))
-# print(token1.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_1))
+print('before')
+print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
+print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
+print(swap(False, 3, pair_fee, 0, 0))
+print('after')
+print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
+print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
 
 # add liquidity
-print('before')
-print(token0.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_0))
-print(token1.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_1))
-slot0 = pool.functions.slot0().call()
-price = get_current_price()
-print(add_liquidity(5, 5 * price, slot0[1] - 5 * tick_spacing, slot0[1] + 5 * tick_spacing))
-print('after')
-print(token0.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_0))
-print(token1.functions.balanceOf(wallet_address).call() / (10 ** decimals_token_1))
+# print('before')
+# print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
+# print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
+# slot0 = pool.functions.slot0().call()
+# price = get_current_price()
+# print(add_liquidity(5, 5 * price, slot0[1] - 5 * tick_spacing, slot0[1] + 5 * tick_spacing))
+# print('after')
+# print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
+# print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
