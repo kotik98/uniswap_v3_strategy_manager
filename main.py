@@ -678,7 +678,7 @@ def add_liquidity(token0_amount, token1_amount, tick_lower, tick_upper):
 print('before')
 print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
 print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
-print(swap(False, 3, pair_fee, 0, 0))
+print(swap(True, 3, pair_fee, 0, 0))
 print('after')
 print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
 print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
