@@ -7,7 +7,7 @@ from web3 import Web3
 from config import *
 
 # w3 = Web3(Web3.HTTPProvider(INFURA_MAINNET))
-w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
+w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:8545'))
 
 pool_abi = json.loads(
     '[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,'
@@ -534,7 +534,7 @@ token0 = w3.eth.contract(address=token0_address, abi=token0_abi)
 token1 = w3.eth.contract(address=token1_address, abi=token1_abi)
 tick_spacing = pool.functions.tickSpacing().call()
 pair_fee = pool.functions.fee().call()
-chain_id = 5777
+chain_id = 31337
 
 
 def get_current_price():
@@ -623,27 +623,29 @@ def swap(zero_for_one, amount, fee, amount_out_minimum, sqrt_price_limit_x96):
         'amountOutMinimum': amount_out_minimum,
         'sqrtPriceLimitX96': sqrt_price_limit_x96
     }
+    approve(token_in, int(amount * (10 ** decimal)), swap_router.address)
     tx = swap_router.functions.exactInputSingle(params).buildTransaction(
         {
-            "gasPrice": w3.eth.gas_price,
             "chainId": chain_id,
             'from': WALLET_ADDRESS,
             'gas': 300000,
             'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS),
             'value': int(amount * (10 ** decimal)),
+            'maxFeePerGas': 20000000000,
+            'maxPriorityFeePerGas': 1000000000,
         }
     )
     return sign_and_send(tx)
 
 
-def approve(token, spender_address):
-    max_amount = w3.toWei(2 ** 64 - 1, 'ether')
-    tx = token.functions.approve(spender_address, max_amount).buildTransaction({
-        "gasPrice": w3.eth.gas_price,
+def approve(token, amount, spender_address):
+    # max_amount = w3.toWei(2 ** 64 - 1, 'ether')
+    tx = token.functions.approve(spender_address, amount).buildTransaction({
         "chainId": chain_id,
         'from': WALLET_ADDRESS,
         'gas': 200000,
-        'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS)
+        'nonce': w3.eth.getTransactionCount(WALLET_ADDRESS),
+        'maxFeePerGas': 20000000000,
     })
     return sign_and_send(tx)
 
@@ -678,10 +680,12 @@ def add_liquidity(token0_amount, token1_amount, tick_lower, tick_upper):
 print('before')
 print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
 print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
-print(swap(True, 3, pair_fee, 0, 0))
+print(swap(True, 100, pair_fee, 0, 0))
 print('after')
 print(token0.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_0))
 print(token1.functions.balanceOf(WALLET_ADDRESS).call() / (10 ** decimals_token_1))
+
+# print(w3.eth.get_transaction('0x355f325848e6be08cf8c63af5f4158e58b5458e62b8ecc7c4f66a18cafb2251c'))
 
 # add liquidity
 # print('before')
